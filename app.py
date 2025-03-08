@@ -15,7 +15,7 @@ st.markdown("""
 st.sidebar.title("Navigation 🗺️")
 st.sidebar.write("Use the menu to navigate between pages!")
 
-# 사이드바 메뉴 추가
+# 사이드바 메뉴
 page = st.sidebar.radio("Select a page 📑", [
     "🏢 Business Overview",
     "⚙️ Process Overview",
@@ -31,7 +31,6 @@ df = None
 if uploaded_file:
     df = pd.read_excel(uploaded_file, sheet_name="Sheet JS")
     
-    # 컬럼명 변경 (짧고 직관적인 변수명으로 변경)
     df.rename(columns={
         "day": "day",
         "number of jobs accepted each day (order by day)": "daily_demand",
@@ -90,7 +89,7 @@ if uploaded_file:
         st.plotly_chart(fig3)
         
         fig4 = px.line(df, x="day", y=["completed_jobs_contract_1", "completed_jobs_contract_2", "completed_jobs_contract_3"], 
-                        title="✅ Completed Jobs per Contract", labels={"value": "Completed Jobs"})
+                        title="✅ Completed Kits per Contract", labels={"value": "Completed Jobs"})
         st.plotly_chart(fig4)
     
     # Process Overview
@@ -134,19 +133,23 @@ if uploaded_file:
         
         safety_stock_0 = 0
         safety_stock_conservative = (max_daily_demand - average_daily_demand) * lead_time
-        safety_stock_99 = Z_99 * std_daily_demand * np.sqrt(lead_time)
+        safety_stock_99_leadtime = Z_99 * std_daily_demand * np.sqrt(lead_time)
+        safety_stock_99 = Z_99 * std_daily_demand
         
         ROP_0 = (average_daily_demand * lead_time) + safety_stock_0
         ROP_conservative = (average_daily_demand * lead_time) + safety_stock_conservative
+        ROP_99_leadtime = (average_daily_demand * lead_time) + safety_stock_99_leadtime
         ROP_99 = (average_daily_demand * lead_time) + safety_stock_99
     
         st.metric(label="📊 Economic Order Quantity (EOQ)", value=f"{EOQ:.2f} kits",
                   help=f"EOQ = sqrt((2 * {annual_demand:.2f} * {order_cost}) / {holding_cost})")
+         st.metric(label="📉 Reorder Point (99% Service Level)", value=f"{ROP_99:.2f} kits",
+                  help=f"ROP = ({average_daily_demand:.2f} * {lead_time}) + {Z_99} * {std_daily_demand:.2f}")
         st.metric(label="📦 Reorder Point (SS = 0)", value=f"{ROP_0:.2f} kits",
                   help=f"ROP = ({average_daily_demand:.2f} * {lead_time}) + 0")
         st.metric(label="⚠️ Reorder Point (Conservative SS)", value=f"{ROP_conservative:.2f} kits",
                   help=f"ROP = ({average_daily_demand:.2f} * {lead_time}) + ({max_daily_demand:.2f} - {average_daily_demand:.2f}) * {lead_time}")
-        st.metric(label="🔵 Reorder Point (99% Service Level)", value=f"{ROP_99:.2f} kits",
+        st.metric(label="🔵 Reorder Point (99% Service Level * sqrt(lead time))", value=f"{ROP_99_leadtime:.2f} kits",
                   help=f"ROP = ({average_daily_demand:.2f} * {lead_time}) + {Z_99} * {std_daily_demand:.2f} * sqrt({lead_time})")
 
 
