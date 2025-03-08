@@ -74,42 +74,66 @@ if uploaded_file:
         mime="text/csv"
     )
 
-# Machine Evaluation Page
-if page == "🤖 Machine Evaluation" and df is not None:
-    st.header("🤖 Machine Evaluation")
+    # Business Overview
+    if page == "🏢 Business Overview":
+        st.header("📊 Business Overview")
+        
+        fig1 = px.line(df, x="day", y="daily_demand", title="📈 Daily Demand")
+        st.plotly_chart(fig1)
+        
+        fig2 = px.line(df, x="day", y=["revenue_contract_1", "revenue_contract_2", "revenue_contract_3"], 
+                        title="💰 Daily Revenue per Contract", labels={"value": "Revenue ($)"})
+        st.plotly_chart(fig2)
+        
+        fig3 = px.line(df, x="day", y=["lead_time_contract_1", "lead_time_contract_2", "lead_time_contract_3"], 
+                        title="⏳ Job Lead Time per Contract", labels={"value": "Lead Time (days)"})
+        st.plotly_chart(fig3)
+        
+        fig4 = px.line(df, x="day", y=["completed_jobs_contract_1", "completed_jobs_contract_2", "completed_jobs_contract_3"], 
+                        title="✅ Completed Jobs per Contract", labels={"value": "Completed Jobs"})
+        st.plotly_chart(fig4)
     
-    s1 = st.number_input("Enter number of machines for Station 1", min_value=1, value=3, step=1)
-    s2 = st.number_input("Enter number of machines for Station 2", min_value=1, value=3, step=1)
-    s3 = st.number_input("Enter number of machines for Station 3", min_value=1, value=3, step=1)
+    # Process Overview
+    if page == "⚙️ Process Overview":
+        st.header("🔍 Process Overview")
+        
+        station_choice = st.selectbox("Select a Station 🔄", ["Station 1", "Station 2", "Station 3"])
+        
+        station_util_col = f"utilization_{station_choice[-1]}"
+        station_queue_col = f"queue_{station_choice[-1]}"
+        
+        fig_util = px.line(df, x="day", y=station_util_col, title=f"⚡ Utilization of {station_choice}")
+        st.plotly_chart(fig_util)
+        
+        fig_queue = px.line(df, x="day", y=station_queue_col, title=f"📦 Queue Length at {station_choice}")
+        st.plotly_chart(fig_queue)
     
-    PT1, PT2, PT3 = 4.4, 3.2, 1.6
-    
-    C1, C2, C3 = s1 / PT1, s2 / PT2, s3 / PT3
-    min_capacity = min(C1, C2, C3)
-    
-    bottleneck_stations = []
-    if min_capacity == C1:
-        bottleneck_stations.append("Station 1 🏭")
-    if min_capacity == C2:
-        bottleneck_stations.append("Station 2 🏭")
-    if min_capacity == C3:
-        bottleneck_stations.append("Station 3 🏭")
-    
-    CT = 1 / min_capacity * 24
-    
-    st.metric(label="⚙️ Capacity of Station 1", value=f"{C1:.2f} jobs/day")
-    st.metric(label="⚙️ Capacity of Station 2", value=f"{C2:.2f} jobs/day")
-    st.metric(label="⚙️ Capacity of Station 3", value=f"{C3:.2f} jobs/day")
-    st.metric(label="🔴 Minimum Capacity (Bottleneck)", value=f"{min_capacity:.2f} jobs/day")
-    st.metric(label="⏳ Cycle Time", value=f"{CT:.2f} hours/job")
-    st.metric(label="🌟 Bottleneck Station(s)", value=", ".join(bottleneck_stations))
-    
-    add_machine = st.selectbox("Which station would you like to add a machine to?", ["Station 1", "Station 2", "Station 3"])
-    if st.button("Add Machine 🛠️"):
-        if add_machine == "Station 1":
-            s1 += 1
-        elif add_machine == "Station 2":
-            s2 += 1
-        elif add_machine == "Station 3":
-            s3 += 1
-        st.experimental_rerun()
+    # Reorder Point & Order Quantity Page
+    if page == "📦 Reorder Point & Order Quantity":
+        st.header("📦 Reorder Point & Economic Order Quantity")
+        
+        daily_demand = df["daily_demand"]
+        average_daily_demand = daily_demand.mean()
+        max_daily_demand = daily_demand.max()
+        std_daily_demand = daily_demand.std()
+        annual_demand = average_daily_demand * 365
+        
+        order_cost = 1000
+        holding_cost = 10 * 0.1
+        EOQ = np.sqrt((2 * annual_demand * order_cost) / holding_cost)
+        
+        lead_time = 4
+        Z_99 = 2.33
+        
+        safety_stock_0 = 0
+        safety_stock_conservative = (max_daily_demand - average_daily_demand) * lead_time
+        safety_stock_99 = Z_99 * std_daily_demand * np.sqrt(lead_time)
+        
+        ROP_0 = (average_daily_demand * lead_time) + safety_stock_0
+        ROP_conservative = (average_daily_demand * lead_time) + safety_stock_conservative
+        ROP_99 = (average_daily_demand * lead_time) + safety_stock_99
+        
+        st.metric(label="📊 Economic Order Quantity (EOQ)", value=f"{EOQ:.2f} kits")
+        st.metric(label="📦 Reorder Point (SS = 0)", value=f"{ROP_0:.2f} kits")
+        st.metric(label="⚠️ Reorder Point (Conservative SS)", value=f"{ROP_conservative:.2f} kits")
+        st.metric(label="🔵 Reorder Point (99% Service Level)", value=f"{ROP_99:.2f} kits")
