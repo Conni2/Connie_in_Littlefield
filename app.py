@@ -9,17 +9,17 @@ import gdown
 file_url_1 = 'https://drive.google.com/uc?id=1VLQRhTM7JwY2NNgK9AVQ0JfliRIuJJO-'
 file_url_2 = 'https://drive.google.com/uc?id=10vKitkQ6GgZkB5CqZmDQq_ki-rXI9Ksg'
 
-# 첫 번째 파일을 다운로드
-gdown.download(file_url_1, '/mnt/data/first_file.xlsx', quiet=False)
+# 첫 번째 파일을 다운로드 (Streamlit에서 사용할 수 있는 /tmp 디렉토리로)
+gdown.download(file_url_1, '/tmp/first_file.xlsx', quiet=False)
 
 # 두 번째 파일을 다운로드
-gdown.download(file_url_2, '/mnt/data/second_file.xlsx', quiet=False)
+gdown.download(file_url_2, '/tmp/second_file.xlsx', quiet=False)
 
 # 첫 번째 엑셀 파일 로딩
-df1 = pd.read_excel('/mnt/data/first_file.xlsx', sheet_name="Sheet JS")
+df1 = pd.read_excel('/tmp/first_file.xlsx', sheet_name="Sheet JS")
 
 # 두 번째 엑셀 파일 로딩
-df2 = pd.read_excel('/mnt/data/second_file.xlsx', sheet_name="Sheet JS")
+df2 = pd.read_excel('/tmp/second_file.xlsx', sheet_name="Sheet JS")
 
 # 페이지 네비게이션
 page = st.selectbox("Select Page", ["Business Overview", "Process Overview", "RP/EOQ Results", "Interval Analysis", "Bottleneck Analysis"])
