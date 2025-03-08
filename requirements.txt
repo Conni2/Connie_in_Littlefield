@@ -5,3 +5,4 @@ numpy
 seaborn
 gdown
 openpyxl
+plotly.express
