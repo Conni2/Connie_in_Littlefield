@@ -139,11 +139,15 @@ if uploaded_file:
         ROP_0 = (average_daily_demand * lead_time) + safety_stock_0
         ROP_conservative = (average_daily_demand * lead_time) + safety_stock_conservative
         ROP_99 = (average_daily_demand * lead_time) + safety_stock_99
-        
-        st.metric(label="📊 Economic Order Quantity (EOQ)", value=f"{EOQ:.2f} kits")
-        st.metric(label="📦 Reorder Point (SS = 0)", value=f"{ROP_0:.2f} kits")
-        st.metric(label="⚠️ Reorder Point (Conservative SS)", value=f"{ROP_conservative:.2f} kits")
-        st.metric(label="🔵 Reorder Point (99% Service Level)", value=f"{ROP_99:.2f} kits")
+    
+        st.metric(label="📊 Economic Order Quantity (EOQ)", value=f"{EOQ:.2f} kits",
+                  help=f"EOQ = sqrt((2 * {annual_demand:.2f} * {order_cost}) / {holding_cost})")
+        st.metric(label="📦 Reorder Point (SS = 0)", value=f"{ROP_0:.2f} kits",
+                  help=f"ROP = ({average_daily_demand:.2f} * {lead_time}) + 0")
+        st.metric(label="⚠️ Reorder Point (Conservative SS)", value=f"{ROP_conservative:.2f} kits",
+                  help=f"ROP = ({average_daily_demand:.2f} * {lead_time}) + ({max_daily_demand:.2f} - {average_daily_demand:.2f}) * {lead_time}")
+        st.metric(label="🔵 Reorder Point (99% Service Level)", value=f"{ROP_99:.2f} kits",
+                  help=f"ROP = ({average_daily_demand:.2f} * {lead_time}) + {Z_99} * {std_daily_demand:.2f} * sqrt({lead_time})")
 
 
 # Machine Evaluation Page
@@ -151,8 +155,8 @@ if uploaded_file:
         st.header("🤖 Machine Evaluation")
         
         s1 = st.number_input("Enter number of machines for Station 1", min_value=1, value=3, step=1)
-        s2 = st.number_input("Enter number of machines for Station 2", min_value=1, value=3, step=1)
-        s3 = st.number_input("Enter number of machines for Station 3", min_value=1, value=3, step=1)
+        s2 = st.number_input("Enter number of machines for Station 2", min_value=1, value=2, step=1)
+        s3 = st.number_input("Enter number of machines for Station 3", min_value=1, value=1, step=1)
         
         PT1, PT2, PT3 = 4.4, 3.2, 1.6
         
