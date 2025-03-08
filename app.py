@@ -97,10 +97,12 @@ if uploaded_file:
     if page == "⚙️ Process Overview":
         st.header("🔍 Process Overview")
         
-        station_choice = st.selectbox("Select a Station 🔄", ["Station 1", "Station 2", "Station 3"])
+        station_map = {"Station 1": "1", "Station 2": "2", "Station 3": "3"}
+        station_choice = st.selectbox("Select a Station 🔄", list(station_map.keys()))
+        station_num = station_map[station_choice]
         
-        station_util_col = f"utilization_{station_choice[-1]}"
-        station_queue_col = f"queue_{station_choice[-1]}"
+        station_util_col = f"utilization_station_{station_num}"
+        station_queue_col = f"queue_station_{station_num}"
         
         fig_util = px.line(df, x="day", y=station_util_col, title=f"⚡ Utilization of {station_choice}")
         st.plotly_chart(fig_util)
