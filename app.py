@@ -97,17 +97,22 @@ if uploaded_file:
     if page == "⚙️ Process Overview":
         st.header("🔍 Process Overview")
         
-        station_map = {"Station 1": "1", "Station 2": "2", "Station 3": "3"}
+        station_map = {"Station 1": "1", "Station 2": "2", "Station 3": "3", "All Stations": "all"}
         station_choice = st.selectbox("Select a Station 🔄", list(station_map.keys()))
         station_num = station_map[station_choice]
         
-        station_util_col = f"utilization_station_{station_num}"
-        station_queue_col = f"queue_station_{station_num}"
+        if station_num == "all":
+            fig_util = px.line(df, x="day", y=["utilization_station_1", "utilization_station_2", "utilization_station_3"],
+                               title="⚡ Utilization of All Stations")
+            fig_queue = px.line(df, x="day", y=["queue_station_1", "queue_station_2", "queue_station_3"],
+                                title="📦 Queue Length of All Stations")
+        else:
+            station_util_col = f"utilization_station_{station_num}"
+            station_queue_col = f"queue_station_{station_num}"
+            fig_util = px.line(df, x="day", y=station_util_col, title=f"⚡ Utilization of {station_choice}")
+            fig_queue = px.line(df, x="day", y=station_queue_col, title=f"📦 Queue Length at {station_choice}")
         
-        fig_util = px.line(df, x="day", y=station_util_col, title=f"⚡ Utilization of {station_choice}")
         st.plotly_chart(fig_util)
-        
-        fig_queue = px.line(df, x="day", y=station_queue_col, title=f"📦 Queue Length at {station_choice}")
         st.plotly_chart(fig_queue)
     
     # Reorder Point & Order Quantity Page
