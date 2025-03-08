@@ -143,7 +143,7 @@ if uploaded_file:
     
         st.metric(label="📊 Economic Order Quantity (EOQ)", value=f"{EOQ:.2f} kits",
                   help=f"EOQ = sqrt((2 * {annual_demand:.2f} * {order_cost}) / {holding_cost})")
-         st.metric(label="📉 Reorder Point (99% Service Level)", value=f"{ROP_99:.2f} kits",
+        st.metric(label="📉 Reorder Point (99% Service Level)", value=f"{ROP_99:.2f} kits",
                   help=f"ROP = ({average_daily_demand:.2f} * {lead_time}) + {Z_99} * {std_daily_demand:.2f}")
         st.metric(label="📦 Reorder Point (SS = 0)", value=f"{ROP_0:.2f} kits",
                   help=f"ROP = ({average_daily_demand:.2f} * {lead_time}) + 0")
