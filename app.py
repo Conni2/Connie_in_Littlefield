@@ -150,7 +150,7 @@ if uploaded_file:
                   help=f"ROP = ({average_daily_demand:.2f} * {lead_time}) + {Z_99} * {std_daily_demand:.2f} * sqrt({lead_time})")
 
 
-# Machine Evaluation Page
+    # Machine Evaluation Page
     if page == "🤖 Machine Evaluation":
         st.header("🤖 Machine Evaluation")
         
@@ -169,10 +169,18 @@ if uploaded_file:
         
         CT = 1 / min_capacity * 24
         
-        queue_lengths = {station: df[f"queue_{station.lower().replace(' ', '_')}_1"].mean() for station in bottleneck_stations}
-        utilization = {station: df[f"utilization_{station.lower().replace(' ', '_')}_1"].mean() for station in bottleneck_stations}
+        queue_lengths = {station: df[f"queue_station_{station.split()[-1]}"] .mean() for station in bottleneck_stations}
+        utilization = {station: df[f"utilization_station_{station.split()[-1]}"] .mean() for station in bottleneck_stations}
         
-        recommended_station = max(queue_lengths, key=queue_lengths.get) if len(set(queue_lengths.values())) > 1 else min(utilization, key=utilization.get)
+        if len(bottleneck_stations) > 1:
+            max_queue_station = max(queue_lengths, key=queue_lengths.get)
+            
+            if all(queue_lengths[station] == queue_lengths[max_queue_station] for station in bottleneck_stations):
+                recommended_station = max(utilization, key=utilization.get)
+            else:
+                recommended_station = max_queue_station
+        else:
+            recommended_station = bottleneck_stations[0]
         
         st.metric(label="⚙️ Capacity of Station 1", value=f"{C1:.2f} jobs/day", help=f"C1 = {s1} / {PT1}")
         st.metric(label="⚙️ Capacity of Station 2", value=f"{C2:.2f} jobs/day", help=f"C2 = {s2} / {PT2}")
