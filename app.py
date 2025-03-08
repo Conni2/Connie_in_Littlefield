@@ -243,10 +243,7 @@ if uploaded_interval_file is not None:
     plt.legend()
     st.pyplot(plt)
 
-import streamlit as st
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
+
 
 # 병목 분석 및 시뮬레이션 페이지
 st.header("Bottleneck Analysis and Simulation")
