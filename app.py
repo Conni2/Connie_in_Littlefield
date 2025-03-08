@@ -171,6 +171,7 @@ st.write(f"🟡 **ROP (SS = Max Daily Demand - Avg Daily Demand * L, rounded)**:
 st.write(f"🟢 **ROP (SS = 99% Service Level, rounded)**: {ROP_99_rounded} orders")
 
 
+'''
 # 인터벌 분석 페이지
 st.header("Interval Analysis")
 
@@ -244,7 +245,7 @@ if uploaded_interval_file is not None:
     plt.legend()
     st.pyplot(plt)
 
-
+'''
 
 # 병목 분석 및 시뮬레이션 페이지
 st.header("Bottleneck Analysis and Simulation")
