@@ -151,7 +151,7 @@ if uploaded_file:
 
 
 # Machine Evaluation Page
-    if page == "🤖 Machine Evaluation" and df is not None:
+    if page == "🤖 Machine Evaluation":
         st.header("🤖 Machine Evaluation")
         
         s1 = st.number_input("Enter number of machines for Station 1", min_value=1, value=3, step=1)
@@ -163,24 +163,26 @@ if uploaded_file:
         C1, C2, C3 = s1 / PT1, s2 / PT2, s3 / PT3
         min_capacity = min(C1, C2, C3)
         
-        bottleneck_stations = []
-        if min_capacity == C1:
-            bottleneck_stations.append("Station 1 🏭")
-        if min_capacity == C2:
-            bottleneck_stations.append("Station 2 🏭")
-        if min_capacity == C3:
-            bottleneck_stations.append("Station 3 🏭")
+        bottleneck_stations = [
+            station for station, cap in zip(["Station 1", "Station 2", "Station 3"], [C1, C2, C3]) if cap == min_capacity
+        ]
         
         CT = 1 / min_capacity * 24
         
-        st.metric(label="⚙️ Capacity of Station 1", value=f"{C1:.2f} jobs/day")
-        st.metric(label="⚙️ Capacity of Station 2", value=f"{C2:.2f} jobs/day")
-        st.metric(label="⚙️ Capacity of Station 3", value=f"{C3:.2f} jobs/day")
+        queue_lengths = {station: df[f"queue_{station.lower().replace(' ', '_')}_1"].mean() for station in bottleneck_stations}
+        utilization = {station: df[f"utilization_{station.lower().replace(' ', '_')}_1"].mean() for station in bottleneck_stations}
+        
+        recommended_station = max(queue_lengths, key=queue_lengths.get) if len(set(queue_lengths.values())) > 1 else min(utilization, key=utilization.get)
+        
+        st.metric(label="⚙️ Capacity of Station 1", value=f"{C1:.2f} jobs/day", help=f"C1 = {s1} / {PT1}")
+        st.metric(label="⚙️ Capacity of Station 2", value=f"{C2:.2f} jobs/day", help=f"C2 = {s2} / {PT2}")
+        st.metric(label="⚙️ Capacity of Station 3", value=f"{C3:.2f} jobs/day", help=f"C3 = {s3} / {PT3}")
         st.metric(label="🔴 Minimum Capacity (Bottleneck)", value=f"{min_capacity:.2f} jobs/day")
         st.metric(label="⏳ Cycle Time", value=f"{CT:.2f} hours/job")
         st.metric(label="🌟 Bottleneck Station(s)", value=", ".join(bottleneck_stations))
+        st.metric(label="🛠️ Recommended Station for Additional Machine", value=recommended_station)
         
-        add_machine = st.selectbox("Which station would you like to add a machine to?", ["Station 1", "Station 2", "Station 3"])
+        add_machine = st.selectbox("Which station would you like to add a machine to?", bottleneck_stations)
         if st.button("Add Machine 🛠️"):
             if add_machine == "Station 1":
                 s1 += 1
@@ -189,3 +191,4 @@ if uploaded_file:
             elif add_machine == "Station 3":
                 s3 += 1
             st.experimental_rerun()
+
