@@ -219,10 +219,11 @@ st.write(f"🌟 Bottleneck Station(s): {', '.join(bottleneck_stations)}")
 # 병목 해결을 위한 기계 추가 버튼
 st.subheader("Machine Addition Recommendation")
 
+# 병목이 여러 개인 경우 Queue Length와 Utilization을 비교하여 최적 스테이션을 선택
 if len(bottleneck_stations) > 1:
-    st.write("Multiple bottlenecks detected. Consider adding machines to the stations with high utilization and queue length.")
-    
-    # 병목이 여러 개인 경우, 대기열 길이와 사용률을 기준으로 개선해야 할 스테이션을 결정
+    print("Multiple bottlenecks detected. Comparing Queue Length and Utilization...")
+
+    # 선택된 병목 스테이션만 비교
     queue_lengths = {
         "Station 1": df["queue_station_1"].mean(),
         "Station 2": df["queue_station_2"].mean(),
@@ -235,26 +236,32 @@ if len(bottleneck_stations) > 1:
         "Station 3": df["utilization_station_3"].mean()
     }
 
-    # 병목이 발생한 스테이션에 대해 대기열 길이와 사용률 출력
-    st.write("Queue Length and Utilization for Bottleneck Stations:")
-    for station in bottleneck_stations:
-        st.write(f"{station} - Queue Length: {queue_lengths[station]:.2f} kits")
-        st.write(f"{station} - Utilization: {utilization[station]:.2f}")
-    
-    # 대기열 길이가 긴 스테이션 우선
-    bottleneck_by_queue = max(queue_lengths, key=queue_lengths.get)
-    st.write(f"Priority based on Queue Length: {bottleneck_by_queue}")
+    # 병목으로 선택된 스테이션만 필터링
+    bottleneck_queue_lengths = {station: queue_lengths[station] for station in bottleneck_stations}
+    bottleneck_utilization = {station: utilization[station] for station in bottleneck_stations}
 
-    # Utilization 우선 (대기열 길이가 같다면)
-    if all(queue_lengths[station] == queue_lengths[bottleneck_by_queue] for station in bottleneck_stations):
-        bottleneck_by_utilization = min(utilization, key=utilization.get)
-        st.write(f"Priority based on Utilization: {bottleneck_by_utilization}")
+    # 평균 Queue Length 출력
+    print("Queue Length (average) per selected bottleneck station:")
+    for station, length in bottleneck_queue_lengths.items():
+        print(f"{station}: {length:.2f} kits")
+
+    # 평균 Utilization 출력
+    print("\nUtilization (average) per selected bottleneck station:")
+    for station, util in bottleneck_utilization.items():
+        print(f"{station}: {util:.2f}")
+
+    # Queue Length 우선순위 (긴 Queue Length 우선)
+    bottleneck_by_queue = max(bottleneck_queue_lengths, key=bottleneck_queue_lengths.get)
+
+    # Utilization 우선순위 (만약 Queue Length가 같다면 Utilization을 기준으로 선택)
+    if len(bottleneck_queue_lengths) > 1 and all(bottleneck_queue_lengths[station] == bottleneck_queue_lengths[list(bottleneck_queue_lengths.keys())[0]] for station in bottleneck_queue_lengths):
+        bottleneck_by_utilization = min(bottleneck_utilization, key=bottleneck_utilization.get)
     else:
-        bottleneck_by_utilization = bottleneck_by_queue  # 대기열 기준 우선
-        st.write(f"Priority based on Queue Length: {bottleneck_by_utilization}")
+        bottleneck_by_utilization = bottleneck_by_queue  # Queue Length가 기준일 경우
 
+    print(f"\nSelected bottleneck based on Queue Length and Utilization: {bottleneck_by_utilization} 🛠️")
 else:
-    st.write(f"Single bottleneck detected: {', '.join(bottleneck_stations)} 🛠️")
+    print(f"Single bottleneck detected: {', '.join(bottleneck_stations)} 🛠️")
 
 # 병목 해소를 위한 추가 기계 선택 (입력 받기)
 add_machine = st.radio("Which station would you like to add a machine to?", ["None", "Station 1", "Station 2", "Station 3"])
