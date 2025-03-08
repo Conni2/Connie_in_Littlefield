@@ -170,209 +170,125 @@ st.write(f"🔴 **ROP (SS = 0, rounded)**: {ROP_0_rounded} orders")
 st.write(f"🟡 **ROP (SS = Max Daily Demand - Avg Daily Demand * L, rounded)**: {ROP_conservative_rounded} orders")
 st.write(f"🟢 **ROP (SS = 99% Service Level, rounded)**: {ROP_99_rounded} orders")
 
-
-'''
-# 인터벌 분석 페이지
-st.header("Interval Analysis")
-
-# 새 엑셀 파일 업로드
-uploaded_interval_file = st.file_uploader("Upload your inventory interval file", type=["xlsx"])
-
-if uploaded_interval_file is not None:
-    # 새 파일을 읽어들임
-    inventory_df = pd.read_excel(uploaded_interval_file, sheet_name="Sheet JS")
-    
-    # 파일 데이터 확인
-    st.write("Data preview:", inventory_df.head())
-    
-    # ROP 및 Order Quantity 값 설정 (예시값)
-    ROP_initial = 1440  # 초기 설정된 ROP
-    OQ_initial = 7200  # 초기 Order Quantity
-    lead_time = 4  # 리드타임 (고정값)
-
-    # ROP 이하로 최초로 떨어진 날 찾기
-    rop_breach_days = inventory_df[inventory_df["inventory_level"] <= ROP_initial]["day"].tolist()
-    st.write(f"Days when ROP was breached: {rop_breach_days}")
-    
-    # Shortage 발생 구간 찾기
-    inventory_df["shortage_flag"] = inventory_df["inventory_level"] == 0
-    shortage_periods = []
-    shortage_durations = []
-    
-    in_shortage = False
-    shortage_start = None
-    for index, row in inventory_df.iterrows():
-        if row["shortage_flag"]:
-            if not in_shortage:
-                shortage_start = row["day"]
-                in_shortage = True
-        else:
-            if in_shortage:
-                shortage_end = inventory_df.loc[index - 1, "day"]
-                shortage_periods.append((shortage_start, shortage_end))
-                shortage_durations.append(shortage_end - shortage_start + 1)
-                in_shortage = False
-    
-    # 결과 출력
-    st.write(f"Shortage periods (Start Day - End Day): {shortage_periods}")
-    st.write(f"Shortage durations (Number of days in shortage): {shortage_durations}")
-    
-    # 주문 간격(Order Interval) 계산
-    order_intervals = [rop_breach_days[i] - rop_breach_days[i - 1] for i in range(1, len(rop_breach_days))]
-    average_order_interval = sum(order_intervals) / len(order_intervals) if order_intervals else None
-    st.write(f"Average order interval: {average_order_interval:.2f} days" if average_order_interval else "Not enough data for average order interval")
-
-    # Shortage-Free 기간 (Shortage 종료일부터 다음 Shortage 시작일까지의 평균 간격)
-    shortage_intervals = [shortage_periods[i][0] - shortage_periods[i - 1][1] for i in range(1, len(shortage_periods))]
-    average_shortage_free_period = sum(shortage_intervals) / len(shortage_intervals) if shortage_intervals else None
-    st.write(f"Average shortage-free period: {average_shortage_free_period:.2f} days" if average_shortage_free_period else "Not enough data for shortage-free period")
-    
-    # k 값 계산
-    k = (average_shortage_free_period / average_order_interval) if (average_shortage_free_period and average_order_interval) else 1
-    st.write(f"k value: {k:.2f}")
-    
-    # 최적 Order Quantity (OQ) 계산
-    OQ_optimized = max(EOQ, OQ_initial) * k
-    st.write(f"Optimized Order Quantity: {OQ_optimized:.2f}")
-    
-    # 인터벌 시각화 (예시로 Shortage 기간 시각화)
-    plt.figure(figsize=(10, 6))
-    plt.plot(inventory_df["day"], inventory_df["inventory_level"], label="Inventory Level", color='b')
-    plt.axhline(y=ROP_initial, color='r', linestyle='--', label="ROP Threshold")
-    plt.title("Inventory Level with ROP Threshold")
-    plt.xlabel("Day")
-    plt.ylabel("Inventory Level (kits)")
-    plt.legend()
-    st.pyplot(plt)
-
-'''
-
 # 병목 분석 및 시뮬레이션 페이지
 st.header("Bottleneck Analysis and Simulation")
 
-# 메인 대시보드에서 업로드된 파일을 st.session_state로 저장했는지 확인
-if 'df' not in st.session_state:
-    st.warning("Please upload the main data file on the main dashboard page first.")
-else:
-    # 기존 메인 대시보드에서 업로드된 데이터 사용
-    df = st.session_state.df
+# 기본적으로 병목을 찾아서 시뮬레이션을 위한 설정
+st.subheader("Machine Allocation and Bottleneck Detection")
 
-    # 기본적으로 병목을 찾아서 시뮬레이션을 위한 설정
-    st.subheader("Machine Allocation and Bottleneck Detection")
+# 기본 데이터 확인
+st.write("Data preview:", df.head())
+
+# 각 스테이션에 대한 처리 시간 (예시 값, 원본 데이터에 맞게 수정)
+PT1 = 4.4  # Station 1 처리 시간 (시간/작업)
+PT2 = 3.2  # Station 2 처리 시간 (시간/작업)
+PT3 = 1.6  # Station 3 처리 시간 (시간/작업)
+
+# 기본 기계 개수 입력
+s1 = st.number_input("Enter the number of machines for Station 1", min_value=1, value=1)
+s2 = st.number_input("Enter the number of machines for Station 2", min_value=1, value=1)
+s3 = st.number_input("Enter the number of machines for Station 3", min_value=1, value=1)
+
+# 각 스테이션의 처리 능력 계산 (Capacity = 기계 수 / 처리 시간)
+C1 = s1 / PT1  # Station 1의 처리 능력
+C2 = s2 / PT2  # Station 2의 처리 능력
+C3 = s3 / PT3  # Station 3의 처리 능력
+
+# 병목 찾기 (가장 낮은 처리 능력)
+min_capacity = min(C1, C2, C3)
+
+# 병목이 발생하는 스테이션 찾기
+bottleneck_stations = []
+if min_capacity == C1:
+    bottleneck_stations.append("Station 1")
+if min_capacity == C2:
+    bottleneck_stations.append("Station 2")
+if min_capacity == C3:
+    bottleneck_stations.append("Station 3")
+
+# 시뮬레이션: Cycle Time 계산 (Cycle Time = 1 / 처리 능력)
+CT = 1 / min_capacity * 24  # Cycle Time (시간/작업)
+
+st.write(f"Capacity of Station 1: {C1:.2f} jobs/day")
+st.write(f"Capacity of Station 2: {C2:.2f} jobs/day")
+st.write(f"Capacity of Station 3: {C3:.2f} jobs/day")
+st.write(f"Minimum Capacity (Bottleneck): {min_capacity:.2f} jobs/day")
+st.write(f"Cycle Time (CT): {CT:.2f} hours/job")
+st.write(f"🌟 Bottleneck Station(s): {', '.join(bottleneck_stations)}")
+
+# 병목 해결을 위한 기계 추가 버튼
+st.subheader("Machine Addition Recommendation")
+
+if len(bottleneck_stations) > 1:
+    st.write("Multiple bottlenecks detected. Consider adding machines to the stations with high utilization and queue length.")
     
-    # 기본 데이터 확인
-    st.write("Data preview:", df.head())
+    # 병목이 여러 개인 경우, 대기열 길이와 사용률을 기준으로 개선해야 할 스테이션을 결정
+    queue_lengths = {
+        "Station 1": df["queue_station_1"].mean(),
+        "Station 2": df["queue_station_2"].mean(),
+        "Station 3": df["queue_station_3"].mean()
+    }
 
-    # 각 스테이션에 대한 처리 시간 (예시 값, 원본 데이터에 맞게 수정)
-    PT1 = 4.4  # Station 1 처리 시간 (시간/작업)
-    PT2 = 3.2  # Station 2 처리 시간 (시간/작업)
-    PT3 = 1.6  # Station 3 처리 시간 (시간/작업)
+    utilization = {
+        "Station 1": df["utilization_station_1"].mean(),
+        "Station 2": df["utilization_station_2"].mean(),
+        "Station 3": df["utilization_station_3"].mean()
+    }
 
-    # 기본 기계 개수 입력
-    s1 = st.number_input("Enter the number of machines for Station 1", min_value=1, value=1)
-    s2 = st.number_input("Enter the number of machines for Station 2", min_value=1, value=1)
-    s3 = st.number_input("Enter the number of machines for Station 3", min_value=1, value=1)
+    # 병목이 발생한 스테이션에 대해 대기열 길이와 사용률 출력
+    st.write("Queue Length and Utilization for Bottleneck Stations:")
+    for station in bottleneck_stations:
+        st.write(f"{station} - Queue Length: {queue_lengths[station]:.2f} kits")
+        st.write(f"{station} - Utilization: {utilization[station]:.2f}")
+    
+    # 대기열 길이가 긴 스테이션 우선
+    bottleneck_by_queue = max(queue_lengths, key=queue_lengths.get)
+    st.write(f"Priority based on Queue Length: {bottleneck_by_queue}")
 
-    # 각 스테이션의 처리 능력 계산 (Capacity = 기계 수 / 처리 시간)
-    C1 = s1 / PT1  # Station 1의 처리 능력
-    C2 = s2 / PT2  # Station 2의 처리 능력
-    C3 = s3 / PT3  # Station 3의 처리 능력
-
-    # 병목 찾기 (가장 낮은 처리 능력)
-    min_capacity = min(C1, C2, C3)
-
-    # 병목이 발생하는 스테이션 찾기
-    bottleneck_stations = []
-    if min_capacity == C1:
-        bottleneck_stations.append("Station 1")
-    if min_capacity == C2:
-        bottleneck_stations.append("Station 2")
-    if min_capacity == C3:
-        bottleneck_stations.append("Station 3")
-
-    # 시뮬레이션: Cycle Time 계산 (Cycle Time = 1 / 처리 능력)
-    CT = 1 / min_capacity * 24  # Cycle Time (시간/작업)
-
-    st.write(f"Capacity of Station 1: {C1:.2f} jobs/day")
-    st.write(f"Capacity of Station 2: {C2:.2f} jobs/day")
-    st.write(f"Capacity of Station 3: {C3:.2f} jobs/day")
-    st.write(f"Minimum Capacity (Bottleneck): {min_capacity:.2f} jobs/day")
-    st.write(f"Cycle Time (CT): {CT:.2f} hours/job")
-    st.write(f"🌟 Bottleneck Station(s): {', '.join(bottleneck_stations)}")
-
-    # 병목 해결을 위한 기계 추가 버튼
-    st.subheader("Machine Addition Recommendation")
-
-    if len(bottleneck_stations) > 1:
-        st.write("Multiple bottlenecks detected. Consider adding machines to the stations with high utilization and queue length.")
-        
-        # 병목이 여러 개인 경우, 대기열 길이와 사용률을 기준으로 개선해야 할 스테이션을 결정
-        queue_lengths = {
-            "Station 1": df["queue_station_1"].mean(),
-            "Station 2": df["queue_station_2"].mean(),
-            "Station 3": df["queue_station_3"].mean()
-        }
-
-        utilization = {
-            "Station 1": df["utilization_station_1"].mean(),
-            "Station 2": df["utilization_station_2"].mean(),
-            "Station 3": df["utilization_station_3"].mean()
-        }
-
-        # 병목이 발생한 스테이션에 대해 대기열 길이와 사용률 출력
-        st.write("Queue Length and Utilization for Bottleneck Stations:")
-        for station in bottleneck_stations:
-            st.write(f"{station} - Queue Length: {queue_lengths[station]:.2f} kits")
-            st.write(f"{station} - Utilization: {utilization[station]:.2f}")
-        
-        # 대기열 길이가 긴 스테이션 우선
-        bottleneck_by_queue = max(queue_lengths, key=queue_lengths.get)
-        st.write(f"Priority based on Queue Length: {bottleneck_by_queue}")
-
-        # Utilization 우선 (대기열 길이가 같다면)
-        if all(queue_lengths[station] == queue_lengths[bottleneck_by_queue] for station in bottleneck_stations):
-            bottleneck_by_utilization = min(utilization, key=utilization.get)
-            st.write(f"Priority based on Utilization: {bottleneck_by_utilization}")
-        else:
-            bottleneck_by_utilization = bottleneck_by_queue  # 대기열 기준 우선
-            st.write(f"Priority based on Queue Length: {bottleneck_by_utilization}")
-
+    # Utilization 우선 (대기열 길이가 같다면)
+    if all(queue_lengths[station] == queue_lengths[bottleneck_by_queue] for station in bottleneck_stations):
+        bottleneck_by_utilization = min(utilization, key=utilization.get)
+        st.write(f"Priority based on Utilization: {bottleneck_by_utilization}")
     else:
-        st.write(f"Single bottleneck detected: {', '.join(bottleneck_stations)} 🛠️")
+        bottleneck_by_utilization = bottleneck_by_queue  # 대기열 기준 우선
+        st.write(f"Priority based on Queue Length: {bottleneck_by_utilization}")
 
-    # 병목 해소를 위한 추가 기계 선택 (입력 받기)
-    add_machine = st.radio("Which station would you like to add a machine to?", ["None", "Station 1", "Station 2", "Station 3"])
-    
-    if add_machine == "Station 1":
-        s1 += 1
-    elif add_machine == "Station 2":
-        s2 += 1
-    elif add_machine == "Station 3":
-        s3 += 1
-    elif add_machine == "None":
-        st.write("No machines added.")
+else:
+    st.write(f"Single bottleneck detected: {', '.join(bottleneck_stations)} 🛠️")
 
-    # 각 스테이션의 새로운 처리 능력 계산
-    C1 = s1 / PT1
-    C2 = s2 / PT2
-    C3 = s3 / PT3
+# 병목 해소를 위한 추가 기계 선택 (입력 받기)
+add_machine = st.radio("Which station would you like to add a machine to?", ["None", "Station 1", "Station 2", "Station 3"])
 
-    # 새로운 병목 계산
-    min_capacity = min(C1, C2, C3)
-    bottleneck_stations = []
-    if min_capacity == C1:
-        bottleneck_stations.append("Station 1")
-    if min_capacity == C2:
-        bottleneck_stations.append("Station 2")
-    if min_capacity == C3:
-        bottleneck_stations.append("Station 3")
+if add_machine == "Station 1":
+    s1 += 1
+elif add_machine == "Station 2":
+    s2 += 1
+elif add_machine == "Station 3":
+    s3 += 1
+elif add_machine == "None":
+    st.write("No machines added.")
 
-    # 새로운 Cycle Time 계산
-    CT = 1 / min_capacity * 24  # Cycle Time (시간/작업)
+# 각 스테이션의 새로운 처리 능력 계산
+C1 = s1 / PT1
+C2 = s2 / PT2
+C3 = s3 / PT3
 
-    st.write(f"Capacity of Station 1 after addition: {C1:.2f} jobs/day")
-    st.write(f"Capacity of Station 2 after addition: {C2:.2f} jobs/day")
-    st.write(f"Capacity of Station 3 after addition: {C3:.2f} jobs/day")
-    st.write(f"Minimum Capacity (Bottleneck after addition): {min_capacity:.2f} jobs/day")
-    st.write(f"Cycle Time (CT) after addition: {CT:.2f} hours/job")
-    st.write(f"🌟 Bottleneck Station(s) after machine addition: {', '.join(bottleneck_stations)}")
+# 새로운 병목 계산
+min_capacity = min(C1, C2, C3)
+bottleneck_stations = []
+if min_capacity == C1:
+    bottleneck_stations.append("Station 1")
+if min_capacity == C2:
+    bottleneck_stations.append("Station 2")
+if min_capacity == C3:
+    bottleneck_stations.append("Station 3")
+
+# 새로운 Cycle Time 계산
+CT = 1 / min_capacity * 24  # Cycle Time (시간/작업)
+
+st.write(f"Capacity of Station 1 after addition: {C1:.2f} jobs/day")
+st.write(f"Capacity of Station 2 after addition: {C2:.2f} jobs/day")
+st.write(f"Capacity of Station 3 after addition: {C3:.2f} jobs/day")
+st.write(f"Minimum Capacity (Bottleneck after addition): {min_capacity:.2f} jobs/day")
+st.write(f"Cycle Time (CT) after addition: {CT:.2f} hours/job")
+st.write(f"🌟 Bottleneck Station(s) after machine addition: {', '.join(bottleneck_stations)}")
