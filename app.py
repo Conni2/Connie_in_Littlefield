@@ -17,23 +17,24 @@ if uploaded_file is not None:
     
     # 컬럼 이름 변경 (짧고 직관적인 이름으로)
     df.rename(columns={
-        "day": "day",
-        "number of jobs accepted each day (order by day)": "daily_demand",
-        "daily average number of jobs waiting for kits (day/kits)": "jobs_waiting_kits",
-        "utilization of station 1, averaged over each day": "utilization_station_1",
-        "daily average number of kits queued for station 1": "queue_station_1",
-        "utilization of station 2, averaged over each day": "utilization_station_2",
-        "daily average number of kits queued for station 2": "queue_station_2",
-        "utilization of station 3, averaged over each day": "utilization_station_3",
-        "daily average revenue per job contract 1": "revenue_contract_1",
-        "daily average revenue per job contract 2": "revenue_contract_2",
-        "daily average revenue per job contract 3": "revenue_contract_3",
-        "daily average job lead time contract 1": "lead_time_contract_1",
-        "daily average job lead time contract 2": "lead_time_contract_2",
-        "daily average job lead time contract 3": "lead_time_contract_3",
-        "number of completed jobs each day contract 1": "completed_jobs_contract_1",
-        "number of completed jobs each day contract 2": "completed_jobs_contract_2",
-        "number of completed jobs each day contract 3": "completed_jobs_contract_3"
+    "day": "day",
+    "number of jobs accepted each day (order by day)": "daily_demand",
+    "daily average number of jobs waiting for kits (day/kits)": "jobs_waiting_kits",
+    "utilization of station 1, averaged over each day": "utilization_station_1",
+    "daily average number of kits queued for station 1": "queue_station_1",
+    "utilization of station 2, averaged over each day": "utilization_station_2",
+    "daily average number of kits queued for station 2": "queue_station_2",
+    "utilization of station 3, averaged over each day": "utilization_station_3",
+    "daily average number of kits queued for station 3": "queue_station_3",
+    "daily average revenue per job contract 1": "revenue_contract_1",
+    "daily average revenue per job contract 2": "revenue_contract_2",
+    "daily average revenue per job contract 3": "revenue_contract_3",
+    "daily average job lead time contract 1": "lead_time_contract_1",
+    "daily average job lead time contract 2": "lead_time_contract_2",
+    "daily average job lead time contract 3": "lead_time_contract_3",
+    "number of completed jobs each day contract 1": "completed_jobs_contract_1",
+    "number of completed jobs each day contract 2": "completed_jobs_contract_2",
+    "number of completed jobs each day contract 3": "completed_jobs_contract_3"
     }, inplace=True)
     
     # 수요와 완료된 작업을 위한 단위 변환
