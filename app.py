@@ -6,7 +6,7 @@ import numpy as np
 # 메인 페이지 설정
 st.set_page_config(page_title="Littlefield Dashboard 🏭", page_icon="📊", layout="wide")
 
-st.title("Welcome to Littlefield Dashboard 🏭")
+st.title("Welcome to Connie's Littlefield Dashboard 🏭")
 st.markdown("""
 ### 🚀 Quick Access
 - [Littlefield Simulation](https://op.responsive.net/lt/najafi1/entry.html)
