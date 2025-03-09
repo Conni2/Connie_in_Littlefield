@@ -158,11 +158,10 @@ if uploaded_file:
         st.metric(label="🔵 Reorder Point (99% Service Level * sqrt(lead time))", value=f"{ROP_99_leadtime:.2f} kits",
                   help=f"ROP = ({average_daily_demand:.2f} * {lead_time}) + {Z_99} * {std_daily_demand:.2f} * sqrt({lead_time})")
         
-
     # Machine Evaluation Page
     if page == "🤖 Machine Evaluation":
         st.header("🤖 Machine Evaluation")
-    
+        
         # 세션 상태 변수 설정 (없으면 초기화)
         if "s1" not in st.session_state:
             st.session_state.s1 = 3
@@ -170,34 +169,41 @@ if uploaded_file:
             st.session_state.s2 = 2
         if "s3" not in st.session_state:
             st.session_state.s3 = 1
-    
+        
         s1 = st.number_input("Enter number of machines for Station 1", min_value=1, value=st.session_state.s1, step=1)
         s2 = st.number_input("Enter number of machines for Station 2", min_value=1, value=st.session_state.s2, step=1)
         s3 = st.number_input("Enter number of machines for Station 3", min_value=1, value=st.session_state.s3, step=1)
-    
+        
         PT1, PT2, PT3 = 4.4, 3.2, 1.6
         C1, C2, C3 = s1 / PT1, s2 / PT2, s3 / PT3
         min_capacity = min(C1, C2, C3)
-    
+        
         bottleneck_stations = [
             station for station, cap in zip(["Station 1", "Station 2", "Station 3"], [C1, C2, C3]) if cap == min_capacity
         ]
-    
+        
         CT = 1 / min_capacity * 24
+        
+        # 사용자로부터 날짜 입력 받기
+        start_day = st.number_input("Enter the start day", min_value=1, value=71, step=1)
     
-        queue_lengths = {station: df[f"queue_station_{station.split()[-1]}"].mean() for station in bottleneck_stations}
-        utilization = {station: df[f"utilization_station_{station.split()[-1]}"].mean() for station in bottleneck_stations}
+        # 날짜를 인덱스로 설정한 df에서 start_day부터 마지막까지의 데이터 추출
+        df_filtered = df.iloc[start_day:, :]
     
+        # 필터된 데이터로부터 queue_length와 utilization 추출
+        queue_lengths = {station: df_filtered[f"queue_station_{station.split()[-1]}"].mean() for station in bottleneck_stations}
+        utilization = {station: df_filtered[f"utilization_station_{station.split()[-1]}"].mean() for station in bottleneck_stations}
+        
         if len(bottleneck_stations) > 1:
             max_queue_station = max(queue_lengths, key=queue_lengths.get)
-    
+        
             if all(queue_lengths[station] == queue_lengths[max_queue_station] for station in bottleneck_stations):
                 recommended_station = max(utilization, key=utilization.get)
             else:
                 recommended_station = max_queue_station
         else:
             recommended_station = bottleneck_stations[0]
-    
+        
         st.metric(label="⚙️ Capacity of Station 1", value=f"{C1:.2f} jobs/day", help=f"C1 = {s1} / {PT1}")
         st.metric(label="⚙️ Capacity of Station 2", value=f"{C2:.2f} jobs/day", help=f"C2 = {s2} / {PT2}")
         st.metric(label="⚙️ Capacity of Station 3", value=f"{C3:.2f} jobs/day", help=f"C3 = {s3} / {PT3}")
@@ -205,7 +211,7 @@ if uploaded_file:
         st.metric(label="⏳ Cycle Time", value=f"{CT:.2f} hours/job")
         st.metric(label="🌟 Bottleneck Station(s)", value=", ".join(bottleneck_stations))
         st.metric(label="🛠️ Recommended Station for Additional Machine", value=recommended_station)
-    
+        
         add_machine = st.selectbox("Which station would you like to add a machine to?", bottleneck_stations)
         if st.button("Add Machine 🛠️"):
             if add_machine == "Station 1":
@@ -215,5 +221,5 @@ if uploaded_file:
             elif add_machine == "Station 3":
                 st.session_state.s3 += 1
             st.rerun()  # 최신 버전에서 st.experimental_rerun() 대신 사용
-
-
+    
+    
