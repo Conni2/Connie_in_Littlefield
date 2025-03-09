@@ -140,6 +140,12 @@ if uploaded_file:
         ROP_conservative = (average_daily_demand * lead_time) + safety_stock_conservative
         ROP_99_leadtime = (average_daily_demand * lead_time) + safety_stock_99_leadtime
         ROP_99 = (average_daily_demand * lead_time) + safety_stock_99
+
+
+        st.metric(label="‼️ Order quantity (by orders)", value=f"{ROP_99*3/60:.2f} orders",
+                  help=f"SL = 99%")
+        st.metric(label="‼️ Reorder point (by orders)", value=f"{ROP_99/60:.2f} orders",
+                  help=f"ROP * k (k=3)")
     
         st.metric(label="📊 Economic Order Quantity (EOQ)", value=f"{EOQ:.2f} kits",
                   help=f"EOQ = sqrt((2 * {annual_demand:.2f} * {order_cost}) / {holding_cost})")
@@ -152,10 +158,6 @@ if uploaded_file:
         st.metric(label="🔵 Reorder Point (99% Service Level * sqrt(lead time))", value=f"{ROP_99_leadtime:.2f} kits",
                   help=f"ROP = ({average_daily_demand:.2f} * {lead_time}) + {Z_99} * {std_daily_demand:.2f} * sqrt({lead_time})")
         
-        st.metric(label="‼️ Order quantity (by orders)", value=f"{ROP_99*3/60:.2f} orders",
-                  help=f"SL = 99%")
-        st.metric(label="‼️ Reorder point (by orders)", value=f"{ROP_99/60:.2f} orders",
-                  help=f"ROP * k (k=3)")
 
     # Machine Evaluation Page
     if page == "🤖 Machine Evaluation":
