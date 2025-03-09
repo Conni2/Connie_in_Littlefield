@@ -151,7 +151,11 @@ if uploaded_file:
                   help=f"ROP = ({average_daily_demand:.2f} * {lead_time}) + ({max_daily_demand:.2f} - {average_daily_demand:.2f}) * {lead_time}")
         st.metric(label="🔵 Reorder Point (99% Service Level * sqrt(lead time))", value=f"{ROP_99_leadtime:.2f} kits",
                   help=f"ROP = ({average_daily_demand:.2f} * {lead_time}) + {Z_99} * {std_daily_demand:.2f} * sqrt({lead_time})")
-
+        
+        st.metric(label="‼️ Order quantity (by orders)", value=f"{ROP_99*3/60:.2f} orders",
+                  help=f"SL = 99%")
+        st.metric(label="‼️ Reorder point (by orders)", value=f"{ROP_99/60:.2f} orders",
+                  help=f"ROP * k (k=3)")
 
     # Machine Evaluation Page
     if page == "🤖 Machine Evaluation":
