@@ -63,7 +63,7 @@ if uploaded_file:
     # 데이터 표시
     st.subheader("📝 Processed Data Preview")
     st.dataframe(df.head())
-    st.dataframe(df.iloc[1])
+
     # 다운로드 옵션 추가
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button(
@@ -185,10 +185,10 @@ if uploaded_file:
         CT = 1 / min_capacity * 24
         
         # 사용자로부터 날짜 입력 받기
-        start_day = st.number_input("Enter the start day", min_value=1, value=71, step=1)
+        start_day = st.number_input("Enter the start day", min_value=1, value=73, step=1)
     
         # 날짜를 인덱스로 설정한 df에서 start_day부터 마지막까지의 데이터 추출
-        df_filtered = df.iloc[start_day:, :]
+        df_filtered = df.iloc[start_day-1:, :]
     
         # 필터된 데이터로부터 queue_length와 utilization 추출
         queue_lengths = {station: df_filtered[f"queue_station_{station.split()[-1]}"].mean() for station in bottleneck_stations}
