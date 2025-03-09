@@ -63,7 +63,7 @@ if uploaded_file:
     # 데이터 표시
     st.subheader("📝 Processed Data Preview")
     st.dataframe(df.head())
-
+    st.dataframe(df.iloc[1])
     # 다운로드 옵션 추가
     csv = df.to_csv(index=False).encode('utf-8')
     st.download_button(
